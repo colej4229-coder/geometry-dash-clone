@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GeoDash Clone</title>
+<style>
+  body { margin:0; overflow:hidden; background:#111; font-family:sans-serif; }
+  canvas { display:block; margin:0 auto; background:linear-gradient(#222,#000); }
+  #ui {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:white; text-align:center;
+  }
+  button {
+    padding:12px 24px; margin:10px; font-size:20px; border:none; border-radius:12px;
+    background:#00ccff; color:black; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<audio id="jumpSound" src="jump.mp3"></audio>
+<audio id="deathSound" src="death.mp3"></audio>
+<audio id="bgMusic" src="bgmusic.mp3" loop></audio>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="ui">
+  <h1>GeoDash Clone</h1>
+  <button id="playBtn">Play</button>
+  <button id="musicBtn">Toggle Music</button>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let gameState = "menu"; // "menu", "playing", "gameover"
+
+const player = { x:100, y:canvas.height-150, size:50, velocityY:0, gravity:1.2, jumpPower:20, grounded:false };
+let obstacles = [];
+let score = 0;
+
+// Sounds
+const jumpSound = document.getElementById("jumpSound");
+const deathSound = document.getElementById("deathSound");
+const bgMusic = document.getElementById("bgMusic");
+let musicOn = true;
+
+// Buttons
+const playBtn = document.getElementById("playBtn");
+const musicBtn = document.getElementById("musicBtn");
+
+musicBtn.onclick = () => {
+  musicOn = !musicOn;
+  if(musicOn) bgMusic.play();
+  else bgMusic.pause();
+};
+
+playBtn.onclick = startGame;
+
+function resetGame() {
+  player.y = canvas.height - 150;
+  player.velocityY = 0;
+  obstacles = [];
+  score = 0;
+}
+
+function spawnObstacle() {
+  const height = 50;
+  obstacles.push({ x:canvas.width, y:canvas.height - height - 100, width:30, height:height });
+}
+
+function jump() {
+  if(player.grounded && gameState === "playing") {
+    player.velocityY = -player.jumpPower;
+    player.grounded = false;
+    if(musicOn) jumpSound.play();
+  }
+}
+
+function handleCollision() {
+  if(musicOn) deathSound.play();
+  gameState = "gameover";
+  document.getElementById("ui").style.display = "flex";
+  document.getElementById("ui").innerHTML = `
+    <h1>Game Over</h1>
+    <p>Score: ${score}</p>
+    <button id="playBtn">Play Again</button>
+    <button id="musicBtn">Toggle Music</button>
+  `;
+  document.getElementById("playBtn").onclick = startGame;
+  document.getElementById("musicBtn").onclick = () => {
+    musicOn = !musicOn;
+    if(musicOn) bgMusic.play();
+    else bgMusic.pause();
+  };
+}
+
+function updateGame() {
+  if(gameState !== "playing") return;
+
+  // player physics
+  player.velocityY += player.gravity;
+  player.y += player.velocityY;
+  if(player.y + player.size >= canvas.height - 100){
+    player.y = canvas.height - 100 - player.size;
+    player.velocityY = 0;
+    player.grounded = true;
+  } else player.grounded = false;
+
+  // obstacles
+  obstacles.forEach(o => o.x -= 10);
+  if(Math.random() < 0.02) spawnObstacle();
+  obstacles = obstacles.filter(o => o.x + o.width > 0);
+
+  // collisions
+  for(let o of obstacles){
+    if(player.x < o.x + o.width && player.x + player.size > o.x &&
+       player.y < o.y + o.height && player.y + player.size > o.y){
+      handleCollision();
+    }
+  }
+
+  score++;
+}
+
+function drawGame() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(gameState === "playing"){
+    // player
+    ctx.fillStyle = "#00ccff";
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+
+    // obstacles
+    ctx.fillStyle = "red";
+    obstacles.forEach(o => ctx.fillRect(o.x,o.y,o.width,o.height));
+
+    // score
+    ctx.fillStyle = "white";
+    ctx.font = "20px sans-serif";
+    ctx.fillText("Score: " + score, 20, 40);
+  }
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  resetGame();
+  gameState = "playing";
+  document.getElementById("ui").style.display = "none";
+  if(musicOn) bgMusic.play();
+}
+
+// Controls
+window.addEventListener("keydown", e => { if(["Space","ArrowUp","KeyW"].includes(e.code)) jump(); });
+canvas.addEventListener("touchstart", jump);
+
+gameLoop();
+</script>
+
+</body>
+</html>
+<!-- Embedded audio -->
+<audio id="jumpSound" src="data:audio/mpeg;base64,//uQxAAAA...YOUR_BASE64_JUMP..." ></audio>
+<audio id="deathSound" src="data:audio/mpeg;base64,//uQxAAAA...YOUR_BASE64_DEATH..." ></audio>
+<audio id="bgMusic" src="data:audio/mpeg;base64,//uQxAAAA...YOUR_BASE64_BGMUSIC..." loop></audio>
+<audio id="jumpSound" src="data:audio/mpeg;base64,SUQzAwAAAAAAIVRJVDIAAAAPAAADSnVtcFRlc3Q="></audio>
+<audio id="deathSound" src="data:audio/mpeg;base64,SUQzAwAAAAAAIVRJVDIAAAAPAAADRGVhdGhUZXN0"></audio>
+<audio id="bgMusic" src="data:audio/mpeg;base64,SUQzAwAAAAAAIVRJVDIAAAAPAAADQkdNdXNpY1Rlc3Q=" loop></audio>
