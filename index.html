@@ -23,7 +23,7 @@
 <!-- Audio files -->
 <audio id="jumpSound" src="jump.mp3"></audio>
 <audio id="deathSound" src="death.mp3"></audio>
-<audio id="bgMusic" src="bgmusic.mp3" loop></audio>
+<audio id="bgMusic" src="bgmusic.mp3?v=2" loop></audio>
 
 <canvas id="gameCanvas"></canvas>
 
@@ -34,14 +34,17 @@
 </div>
 
 <script>
+// Canvas setup
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// Game state
 let gameState = "menu"; // "menu", "playing", "gameover"
 
-const player = { x:100, y:canvas.height-150, size:50, velocityY:0, gravity:1.2, jumpPower:20, grounded:false };
+// Player setup
+const player = { x:100, y:canvas.height-150, size:50, velocityY:0, gravity:1.1, jumpPower:18, grounded:false };
 let obstacles = [];
 let score = 0;
 
@@ -51,23 +54,25 @@ const deathSound = document.getElementById("deathSound");
 const bgMusic = document.getElementById("bgMusic");
 let musicOn = true;
 
-// Lower volumes
-bgMusic.volume = 0.3;
-jumpSound.volume = 0.2;
-deathSound.volume = 0.3;
+// Adjust volumes
+bgMusic.volume = 0.5;   // background music
+jumpSound.volume = 0.2; // jump
+deathSound.volume = 0.3; // death
 
 // Buttons
 const playBtn = document.getElementById("playBtn");
 const musicBtn = document.getElementById("musicBtn");
 
+// Music toggle
 musicBtn.onclick = () => {
   musicOn = !musicOn;
-  if(musicOn) bgMusic.play().catch(e => console.log("Music blocked until user interaction"));
+  if(musicOn) bgMusic.play().catch(e => console.log("Music blocked until interaction"));
   else bgMusic.pause();
 };
 
 playBtn.onclick = startGame;
 
+// Game functions
 function resetGame() {
   player.y = canvas.height - 150;
   player.velocityY = 0;
@@ -76,6 +81,8 @@ function resetGame() {
 }
 
 function spawnObstacle() {
+  const last = obstacles[obstacles.length - 1];
+  if(last && last.x > canvas.width - 300) return; // ensure spacing
   const height = 50;
   obstacles.push({ x:canvas.width, y:canvas.height - height - 100, width:30, height:height });
 }
@@ -104,7 +111,7 @@ function handleCollision() {
   document.getElementById("playBtn").onclick = startGame;
   document.getElementById("musicBtn").onclick = () => {
     musicOn = !musicOn;
-    if(musicOn) bgMusic.play().catch(e => console.log("Music blocked until user interaction"));
+    if(musicOn) bgMusic.play().catch(e => console.log("Music blocked until interaction"));
     else bgMusic.pause();
   };
 }
@@ -112,7 +119,7 @@ function handleCollision() {
 function updateGame() {
   if(gameState !== "playing") return;
 
-  // player physics
+  // Player physics
   player.velocityY += player.gravity;
   player.y += player.velocityY;
   if(player.y + player.size >= canvas.height - 100){
@@ -121,12 +128,12 @@ function updateGame() {
     player.grounded = true;
   } else player.grounded = false;
 
-  // obstacles
+  // Obstacles
   obstacles.forEach(o => o.x -= 10);
-  if(Math.random() < 0.02) spawnObstacle();
+  if(Math.random() < 0.015) spawnObstacle();
   obstacles = obstacles.filter(o => o.x + o.width > 0);
 
-  // collisions
+  // Collisions
   for(let o of obstacles){
     if(player.x < o.x + o.width && player.x + player.size > o.x &&
        player.y < o.y + o.height && player.y + player.size > o.y){
@@ -141,15 +148,15 @@ function drawGame() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   if(gameState === "playing"){
-    // player
+    // Player
     ctx.fillStyle = "#00ccff";
     ctx.fillRect(player.x, player.y, player.size, player.size);
 
-    // obstacles
+    // Obstacles
     ctx.fillStyle = "red";
     obstacles.forEach(o => ctx.fillRect(o.x,o.y,o.width,o.height));
 
-    // score
+    // Score
     ctx.fillStyle = "white";
     ctx.font = "20px sans-serif";
     ctx.fillText("Score: " + score, 20, 40);
@@ -166,7 +173,7 @@ function startGame() {
   resetGame();
   gameState = "playing";
   document.getElementById("ui").style.display = "none";
-  if(musicOn) bgMusic.play().catch(e => console.log("Music blocked until user interaction"));
+  if(musicOn) bgMusic.play().catch(e => console.log("Music blocked until interaction"));
 }
 
 // Controls
