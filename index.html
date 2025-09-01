@@ -20,14 +20,10 @@
 </head>
 <body>
 
-<!-- Background Music -->
-<audio id="bgmusic" src="bgmusic.mp3" loop></audio>
-
-<!-- Jump Sound -->
+<!-- Audio files -->
 <audio id="jumpSound" src="jump.mp3"></audio>
-
-<!-- Death Sound -->
 <audio id="deathSound" src="death.mp3"></audio>
+<audio id="bgMusic" src="bgmusic.mp3" loop></audio>
 
 <canvas id="gameCanvas"></canvas>
 
@@ -55,13 +51,18 @@ const deathSound = document.getElementById("deathSound");
 const bgMusic = document.getElementById("bgMusic");
 let musicOn = true;
 
+// Lower volumes
+bgMusic.volume = 0.3;
+jumpSound.volume = 0.2;
+deathSound.volume = 0.3;
+
 // Buttons
 const playBtn = document.getElementById("playBtn");
 const musicBtn = document.getElementById("musicBtn");
 
 musicBtn.onclick = () => {
   musicOn = !musicOn;
-  if(musicOn) bgMusic.play();
+  if(musicOn) bgMusic.play().catch(e => console.log("Music blocked until user interaction"));
   else bgMusic.pause();
 };
 
@@ -83,7 +84,10 @@ function jump() {
   if(player.grounded && gameState === "playing") {
     player.velocityY = -player.jumpPower;
     player.grounded = false;
-    if(musicOn) jumpSound.play();
+    if(musicOn){
+      jumpSound.currentTime = 0;
+      jumpSound.play();
+    }
   }
 }
 
@@ -100,7 +104,7 @@ function handleCollision() {
   document.getElementById("playBtn").onclick = startGame;
   document.getElementById("musicBtn").onclick = () => {
     musicOn = !musicOn;
-    if(musicOn) bgMusic.play();
+    if(musicOn) bgMusic.play().catch(e => console.log("Music blocked until user interaction"));
     else bgMusic.pause();
   };
 }
@@ -162,7 +166,7 @@ function startGame() {
   resetGame();
   gameState = "playing";
   document.getElementById("ui").style.display = "none";
-  if(musicOn) bgMusic.play();
+  if(musicOn) bgMusic.play().catch(e => console.log("Music blocked until user interaction"));
 }
 
 // Controls
